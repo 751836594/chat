@@ -1,0 +1,19 @@
+version: '3'
+services:
+  php:
+    image: alpine/php
+    ports:
+     - "9000:9000"
+     - "9501:9501"
+    volumes:
+     - ./src:/var/www/src
+  nginx:
+    image: alpine/nginx
+    ports:
+     - "80:80"
+     - "443:443"
+    volumes:
+     - ./src:/var/www/src
+     - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    links:
+     - php
