@@ -2,7 +2,7 @@ FROM  php:7.1-fpm-alpine
 
 MAINTAINER lujunwen "751836594@qq.com"
 
-RUN apk update && apk upgrade && apk add  re2c git gcc make autoconf libc-dev bash
+RUN apk update && apk upgrade && apk add  supervisor re2c git gcc make autoconf libc-dev bash && mkdir -p /etc/supertvisor.d
 
 #安装phalcon扩展
 RUN cd ~  \
@@ -27,6 +27,7 @@ EXPOSE 9501
 WORKDIR /var/www/src
 
 #启动php-fpm
+#ENTRYPOINT ["php-fpm", "-F"]
 
-ENTRYPOINT ["php-fpm", "-F"]
-
+#启动supervisord
+ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]

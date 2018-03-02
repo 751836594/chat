@@ -6,6 +6,7 @@ services:
      - "9000:9000"
      - "9501:9501"
     volumes:
+     - ./docker/supervisord:/etc/supervisor.d
      - ./src:/var/www/src
   nginx:
     image: alpine/nginx
