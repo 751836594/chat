@@ -1,7 +1,7 @@
 version: '3'
 services:
   php:
-    image: alpine/php
+    build: ./docker/php-fpm
     ports:
      - "9000:9000"
      - "9501:9501"
@@ -9,7 +9,7 @@ services:
      - ./docker/supervisord:/etc/supervisor.d
      - ./src:/var/www/src
   nginx:
-    image: alpine/nginx
+    build: ./docker/nginx
     ports:
      - "80:80"
      - "443:443"
