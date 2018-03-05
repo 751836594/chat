@@ -12,6 +12,9 @@ RUN cd ~  \
 	&& docker-php-ext-enable phalcon \
 	&& rm -rf ~/cphalcon
 
+#安装php-redis扩展
+RUN pecl install -o -f redis && docker-php-ext-enable redis
+
 #安装swoole扩展
 RUN apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS linux-headers \
 	&& pecl install swoole \

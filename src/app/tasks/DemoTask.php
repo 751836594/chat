@@ -12,28 +12,69 @@ use \Phalcon\CLI\Task;
  */
 class DemoTask extends Task
 {
+
     public function testAction()
     {
-        $http = new \swoole_http_server("0.0.0.0", 9501);
+        $redisConfig = \tools\Config::getConfig('redis');
+        $redis = \tools\RedisTools::create($redisConfig);
 
-        $http->on("start", function ($server) {
-            echo "Swoole http server is started at http://127.0.0.1:9501\n";
+        $server = new \swoole_websocket_server("0.0.0.0", 9501);
+
+        $server->on('open', function ($server, $req) use ($redis) {
+            $this->_open($server, $req, $redis);
+
         });
 
-        $http->on("request", function ($request, $response) {
-            $response->header("Content-Type", "text/plain");
-            $response->end("Hello World\n");
+        $server->on('message', function ($server, $frame) use ($redis) {
+            $this->_message($server, $frame, $redis);
+
         });
 
-        $http->start();
+        $server->on('close', function ($server, $fd) use ($redis) {
+            $this->_close($server, $fd, $redis);
+
+        });
+
+        $server->start();
     }
 
 
-    public function demoAction()
+    private function _open($server, $req, $redis)
     {
-        $code =['270540063','270540064','270540065','270540065'];
-        $a = array_count_values($code);
-        print_r($a);
+        $msg = "游客: {$req->fd}连接\n";
+        echo $msg;
+        $redis->sAdd('live_list', $req->fd);
+        $liveList = $redis->sMembers('live_list');
+        foreach ($liveList as $item) {
+            if ($item != $req->fd) {
+                $server->push($item, $msg);
+            }
+        }
     }
 
+    private function _message($server, $frame, $redis)
+    {
+        echo "received message: {$frame->data}\n";
+        $liveList = $redis->sMembers('live_list');
+        foreach ($liveList as $item) {
+            if ($item != $frame->fd) {
+                $server->push($item, $frame->data);
+            }
+        }
+    }
+
+    private function _close($server, $fd, $redis)
+    {
+        $exist = $redis->sIsMember('live_list', $fd);
+        if ($exist) {
+            $redis->sRem('live_list', $fd);
+        }
+        $msg = "游客: {$fd}退出直播间\n";
+        echo $msg;
+        $liveList = $redis->sMembers('live_list');
+        foreach ($liveList as $item) {
+            $server->push($item, $msg);
+        }
+
+    }
 }
